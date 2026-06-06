@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "656769854831",
+    "firebase_url": "https://scribeai-adb60-default-rtdb.firebaseio.com",
+    "project_id": "scribeai-adb60",
+    "storage_bucket": "scribeai-adb60.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:656769854831:android:20b1786ff1d4b420950c9a",
+        "android_client_info": {
+          "package_name": "com.example.neurabrief"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBOkfuxbG_5fKshLVJqTR-aOgVw_-qPUR4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

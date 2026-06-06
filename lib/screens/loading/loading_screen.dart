@@ -4,6 +4,8 @@ import "package:provider/provider.dart";
 
 import "../../core/constants/app_constants.dart";
 import "../../core/utils/app_utils.dart";
+import "../../models/summary_model.dart";
+import "../../providers/history_provider.dart";
 import "../../providers/summary_provider.dart";
 import "../../widgets/animated_orb.dart";
 import "../../widgets/particle_background.dart";
@@ -25,17 +27,37 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
   Future<void> _startProcessing() async {
     final provider = context.read<SummaryProvider>();
-    // Run the AI mock and keep the orb on screen for at least 3 seconds.
-    await Future.wait([
+    final history = context.read<HistoryProvider>();
+    
+    // Run the AI and keep the orb on screen for at least 3 seconds.
+    final results = await Future.wait([
       provider.generateSummary(),
       Future.delayed(const Duration(seconds: 3)),
     ]);
+
+    final summary = results[0] as SummaryModel?;
+
     if (!mounted) {
       return;
     }
-    Navigator.of(context).pushReplacement(
-      AppUtils.fadeSlideRoute(const SummaryScreen()),
-    );
+
+    if (summary != null) {
+      // Automatically save to history/DB
+      await history.addSummary(summary);
+      
+      Navigator.of(context).pushReplacement(
+        AppUtils.fadeSlideRoute(const SummaryScreen()),
+      );
+    } else {
+      // Show error and go back
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.errorMessage ?? 'An error occurred'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      Navigator.of(context).pop();
+    }
   }
 
   @override

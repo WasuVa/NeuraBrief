@@ -1,7 +1,11 @@
 import "package:fl_chart/fl_chart.dart";
 import "package:flutter/material.dart";
+import "package:provider/provider.dart";
 
 import "../../core/constants/app_constants.dart";
+import "../../services/auth_service.dart";
+import "../../services/database_service.dart";
+import "../../models/user_model.dart";
 import "../../widgets/glass_card.dart";
 import "../../widgets/particle_background.dart";
 
@@ -10,6 +14,10 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context);
+    final dbService = DatabaseService();
+    final user = authService.currentUser;
+
     return Scaffold(
       body: ParticleBackground(
         child: Container(
@@ -31,26 +39,40 @@ class ProfileScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Center(
-                    child: Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 36,
-                          backgroundColor: Colors.white12,
-                          child: Text(
-                            "NB",
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "NeuraBrief User",
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        Text(
-                          "user@neurabrief.ai",
-                          style: Theme.of(context).textTheme.labelMedium,
-                        ),
-                      ],
+                    child: FutureBuilder<UserModel?>(
+                      future: user != null ? dbService.getUserData(user.uid) : null,
+                      builder: (context, snapshot) {
+                        final userData = snapshot.data;
+                        return Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 36,
+                              backgroundColor: Colors.white12,
+                              child: Text(
+                                userData?.name.isNotEmpty == true 
+                                    ? userData!.name[0].toUpperCase() 
+                                    : "NB",
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              userData?.name ?? "NeuraBrief User",
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            Text(
+                              userData?.email ?? user?.email ?? "user@neurabrief.ai",
+                              style: Theme.of(context).textTheme.labelMedium,
+                            ),
+                            const SizedBox(height: 12),
+                            TextButton.icon(
+                              onPressed: () => authService.signOut(),
+                              icon: const Icon(Icons.logout, color: Colors.redAccent, size: 18),
+                              label: const Text("Logout", style: TextStyle(color: Colors.redAccent)),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(height: 20),

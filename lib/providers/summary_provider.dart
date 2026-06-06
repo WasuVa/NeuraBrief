@@ -12,12 +12,14 @@ class SummaryProvider extends ChangeNotifier {
   SummaryStyle _style = SummaryStyle.professional;
   SummaryModel? _currentSummary;
   bool _isLoading = false;
+  String? _errorMessage;
 
   String get inputText => _inputText;
   SummaryLength get length => _length;
   SummaryStyle get style => _style;
   SummaryModel? get currentSummary => _currentSummary;
   bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
 
   int get wordCount =>
       _inputText.trim().isEmpty ? 0 : _inputText.trim().split(RegExp(r"\s+")).length;
@@ -25,6 +27,7 @@ class SummaryProvider extends ChangeNotifier {
 
   void updateInput(String value) {
     _inputText = value;
+    _errorMessage = null;
     notifyListeners();
   }
 
@@ -40,20 +43,28 @@ class SummaryProvider extends ChangeNotifier {
 
   void clearInput() {
     _inputText = "";
+    _errorMessage = null;
     notifyListeners();
   }
 
-  Future<SummaryModel> generateSummary() async {
+  Future<SummaryModel?> generateSummary() async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
-    final summary = await AiService.generateSummary(
-      input: _inputText,
-      length: _length,
-      style: _style,
-    );
-    _currentSummary = summary;
-    _isLoading = false;
-    notifyListeners();
-    return summary;
+    try {
+      final summary = await AiService.generateSummary(
+        input: _inputText,
+        length: _length,
+        style: _style,
+      );
+      _currentSummary = summary;
+      return summary;
+    } catch (e) {
+      _errorMessage = e.toString();
+      return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }

@@ -1,5 +1,4 @@
 import "package:flutter/material.dart";
-
 import "../core/constants/app_constants.dart";
 
 class GlowButton extends StatefulWidget {
@@ -37,38 +36,6 @@ class _GlowButtonState extends State<GlowButton> {
 
   @override
   Widget build(BuildContext context) {
-    final content = Container(
-      width: widget.fullWidth ? double.infinity : null,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-      decoration: BoxDecoration(
-        gradient: AppConstants.primaryGradient,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppConstants.primary.withValues(alpha: 0.5),
-            blurRadius: 16,
-            spreadRadius: 4,
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: widget.fullWidth ? MainAxisSize.max : MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (widget.icon != null) ...[
-            Icon(widget.icon, color: Colors.white),
-            const SizedBox(width: 8),
-          ],
-          Text(
-            widget.label,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.white,
-                ),
-          ),
-        ],
-      ),
-    );
-
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
@@ -77,7 +44,38 @@ class _GlowButtonState extends State<GlowButton> {
       child: AnimatedScale(
         scale: _scale,
         duration: const Duration(milliseconds: 120),
-        child: content,
+        child: Container(
+          width: widget.fullWidth ? double.infinity : null,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          decoration: BoxDecoration(
+            gradient: AppConstants.primaryGradient,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppConstants.primary.withValues(alpha: 0.5),
+                blurRadius: 16,
+                spreadRadius: 4,
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize:
+                widget.fullWidth ? MainAxisSize.max : MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (widget.icon != null) ...[
+                Icon(widget.icon, color: Colors.white),
+                const SizedBox(width: 8),
+              ],
+              Text(
+                widget.label,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                    ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
