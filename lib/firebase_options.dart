@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -52,12 +53,12 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBOkfuxbG_5fKshLVJqTR-aOgVw_-qPUR4',
-    appId: '1:656769854831:android:20b1786ff1d4b420950c9a',
-    messagingSenderId: '656769854831',
-    projectId: 'scribeai-adb60',
-    databaseURL: 'https://scribeai-adb60-default-rtdb.firebaseio.com',
-    storageBucket: 'scribeai-adb60.firebasestorage.app',
+  static FirebaseOptions get android => FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_API_KEY_ANDROID'] ?? '',
+    appId: dotenv.env['FIREBASE_APP_ID_ANDROID'] ?? '',
+    messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '',
+    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? '',
+    databaseURL: dotenv.env['FIREBASE_DATABASE_URL'],
+    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'],
   );
 }

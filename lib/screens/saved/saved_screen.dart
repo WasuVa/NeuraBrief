@@ -8,7 +8,9 @@ import "../../widgets/glass_card.dart";
 import "../../widgets/particle_background.dart";
 
 class SavedScreen extends StatefulWidget {
-  const SavedScreen({super.key});
+  const SavedScreen({super.key, required this.onBack});
+
+  final VoidCallback onBack;
 
   @override
   State<SavedScreen> createState() => _SavedScreenState();
@@ -51,79 +53,95 @@ class _SavedScreenState extends State<SavedScreen> {
             ),
           ),
           child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  GlassCard(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: TextField(
-                      onChanged: (value) => setState(() => _query = value),
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        hintText: "Search saved summaries",
-                        icon: Icon(Icons.search, color: Colors.white70),
-                      ),
+            child: Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8.0, top: 8.0),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                      onPressed: widget.onBack,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: _categories.map((category) {
-                        final selected = _category == category;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: GestureDetector(
-                            onTap: () => setState(() => _category = category),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient:
-                                    selected ? AppConstants.primaryGradient : null,
-                                color: selected
-                                    ? null
-                                    : Colors.white.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(16),
-                                border:
-                                    Border.all(
-                                      color: Colors.white.withValues(alpha: 0.15),
-                                    ),
-                              ),
-                              child: Text(
-                                category,
-                                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                      color: Colors.white,
-                                    ),
-                              ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        GlassCard(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: TextField(
+                            onChanged: (value) => setState(() => _query = value),
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              hintText: "Search saved summaries",
+                              icon: Icon(Icons.search, color: Colors.white70),
                             ),
                           ),
-                        );
-                      }).toList(),
+                        ),
+                        const SizedBox(height: 12),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: _categories.map((category) {
+                              final selected = _category == category;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: GestureDetector(
+                                  onTap: () => setState(() => _category = category),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient:
+                                          selected ? AppConstants.primaryGradient : null,
+                                      color: selected
+                                          ? null
+                                          : Colors.white.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border:
+                                          Border.all(
+                                            color: Colors.white.withValues(alpha: 0.15),
+                                          ),
+                                    ),
+                                    child: Text(
+                                      category,
+                                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                            color: Colors.white,
+                                          ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: filtered.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    "No saved summaries",
+                                    style: Theme.of(context).textTheme.bodyMedium,
+                                  ),
+                                )
+                              : ListView.separated(
+                                  itemCount: filtered.length,
+                                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                                  itemBuilder: (context, index) {
+                                    return _SavedCard(item: filtered[index]);
+                                  },
+                                ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: filtered.isEmpty
-                        ? Center(
-                            child: Text(
-                              "No saved summaries",
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          )
-                        : ListView.separated(
-                            itemCount: filtered.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 12),
-                            itemBuilder: (context, index) {
-                              return _SavedCard(item: filtered[index]);
-                            },
-                          ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

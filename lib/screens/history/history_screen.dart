@@ -9,7 +9,9 @@ import "../../widgets/glass_card.dart";
 import "../../widgets/particle_background.dart";
 
 class HistoryScreen extends StatelessWidget {
-  const HistoryScreen({super.key});
+  const HistoryScreen({super.key, required this.onBack});
+
+  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -30,31 +32,47 @@ class HistoryScreen extends StatelessWidget {
             ),
           ),
           child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: history.isEmpty
-                  ? _EmptyState()
-                  : ListView.separated(
-                      itemCount: history.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final item = history[index];
-                        return Dismissible(
-                          key: ValueKey(item.id),
-                          direction: DismissDirection.endToStart,
-                          background: Container(
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 20),
-                            color: Colors.redAccent.withValues(alpha: 0.2),
-                            child: const Icon(Icons.delete, color: Colors.red),
-                          ),
-                          onDismissed: (_) {
-                            context.read<HistoryProvider>().deleteSummary(item.id);
-                          },
-                          child: _HistoryCard(item: item),
-                        );
-                      },
+            child: Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8.0, top: 8.0),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                      onPressed: onBack,
                     ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: history.isEmpty
+                        ? _EmptyState()
+                        : ListView.separated(
+                            itemCount: history.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              final item = history[index];
+                              return Dismissible(
+                                key: ValueKey(item.id),
+                                direction: DismissDirection.endToStart,
+                                background: Container(
+                                  alignment: Alignment.centerRight,
+                                  padding: const EdgeInsets.only(right: 20),
+                                  color: Colors.redAccent.withValues(alpha: 0.2),
+                                  child: const Icon(Icons.delete, color: Colors.red),
+                                ),
+                                onDismissed: (_) {
+                                  context.read<HistoryProvider>().deleteSummary(item.id);
+                                },
+                                child: _HistoryCard(item: item),
+                              );
+                            },
+                          ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

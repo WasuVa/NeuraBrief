@@ -94,11 +94,11 @@ class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
   // Primary screens for the glass bottom navigation.
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    HistoryScreen(),
-    SavedScreen(),
-    ProfileScreen(),
+  List<Widget> get _screens => [
+    const HomeScreen(),
+    HistoryScreen(onBack: () => setState(() => _currentIndex = 0)),
+    SavedScreen(onBack: () => setState(() => _currentIndex = 0)),
+    ProfileScreen(onBack: () => setState(() => _currentIndex = 0)),
   ];
 
   @override
