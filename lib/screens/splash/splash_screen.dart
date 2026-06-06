@@ -90,9 +90,10 @@ class _SplashScreenState extends State<SplashScreen>
                                 ],
                               ),
                             ),
-                            const Text(
-                              "🧠",
-                              style: TextStyle(fontSize: 72),
+                            Image.asset(
+                              "assets/app_icon.png",
+                              width: 100,
+                              height: 100,
                             ),
                           ],
                         ),
