@@ -112,7 +112,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   await auth.updatePassword(passwordController.text);
                                 }
 
-                                await history.refreshUserData();
+                                final historyProvider = Provider.of<HistoryProvider>(context, listen: false);
+                                await historyProvider.refreshUserData();
 
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
