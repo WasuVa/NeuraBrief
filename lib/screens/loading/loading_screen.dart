@@ -45,6 +45,9 @@ class _LoadingScreenState extends State<LoadingScreen> {
       // Automatically save to history/DB
       await history.addSummary(summary);
       
+      // Clear the input field for the next note
+      provider.clearInput();
+      
       Navigator.of(context).pushReplacement(
         AppUtils.fadeSlideRoute(const SummaryScreen()),
       );

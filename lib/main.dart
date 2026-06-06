@@ -40,7 +40,11 @@ class NeuraBriefApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => SummaryProvider()),
-        ChangeNotifierProvider(create: (_) => HistoryProvider()..loadHistory()),
+        ChangeNotifierProxyProvider<AuthService, HistoryProvider>(
+          create: (_) => HistoryProvider(),
+          update: (_, auth, history) =>
+              history!..updateUserId(auth.currentUser?.uid),
+        ),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, theme, _) {

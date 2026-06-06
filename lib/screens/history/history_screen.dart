@@ -7,6 +7,7 @@ import "../../models/summary_model.dart";
 import "../../providers/history_provider.dart";
 import "../../widgets/glass_card.dart";
 import "../../widgets/particle_background.dart";
+import "../../widgets/summary_detail_dialog.dart";
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key, required this.onBack});
@@ -66,7 +67,15 @@ class HistoryScreen extends StatelessWidget {
                                 onDismissed: (_) {
                                   context.read<HistoryProvider>().deleteSummary(item.id);
                                 },
-                                child: _HistoryCard(item: item),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => SummaryDetailDialog(summary: item),
+                                    );
+                                  },
+                                  child: _HistoryCard(item: item),
+                                ),
                               );
                             },
                           ),

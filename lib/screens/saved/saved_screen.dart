@@ -6,6 +6,7 @@ import "../../models/summary_model.dart";
 import "../../providers/history_provider.dart";
 import "../../widgets/glass_card.dart";
 import "../../widgets/particle_background.dart";
+import "../../widgets/summary_detail_dialog.dart";
 
 class SavedScreen extends StatefulWidget {
   const SavedScreen({super.key, required this.onBack});
@@ -133,7 +134,16 @@ class _SavedScreenState extends State<SavedScreen> {
                                   itemCount: filtered.length,
                                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                                   itemBuilder: (context, index) {
-                                    return _SavedCard(item: filtered[index]);
+                                    final item = filtered[index];
+                                    return GestureDetector(
+                                      onTap: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => SummaryDetailDialog(summary: item),
+                                        );
+                                      },
+                                      child: _SavedCard(item: item),
+                                    );
                                   },
                                 ),
                         ),

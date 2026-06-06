@@ -1,5 +1,6 @@
 import "package:animated_text_kit/animated_text_kit.dart";
 import "package:flutter/material.dart";
+import "package:flutter/services.dart";
 import "package:provider/provider.dart";
 
 import "../../core/constants/app_constants.dart";
@@ -140,16 +141,22 @@ class SummaryScreen extends StatelessWidget {
                         _ActionButton(
                           icon: Icons.copy_rounded,
                           label: "Copy",
-                          onTap: () {},
+                          onTap: () {
+                            if (summary != null) {
+                              Clipboard.setData(ClipboardData(text: summary.summary));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Summary copied to clipboard")),
+                              );
+                            }
+                          },
                         ),
                         _ActionButton(
-                          icon: Icons.bookmark_rounded,
-                          label: "Save",
+                          icon: Icons.check_circle_rounded,
+                          label: "Saved",
                           onTap: () {
-                            final history = context.read<HistoryProvider>();
-                            if (summary != null) {
-                              history.addSummary(summary);
-                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Summary automatically saved to history")),
+                            );
                           },
                         ),
                         _ActionButton(

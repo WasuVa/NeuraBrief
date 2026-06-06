@@ -1,15 +1,19 @@
 import "package:flutter/material.dart";
+import "package:flutter/services.dart";
 import "package:provider/provider.dart";
 
 import "../../core/constants/app_constants.dart";
 import "../../core/utils/app_utils.dart";
+import "../../models/user_model.dart";
+import "../../providers/history_provider.dart";
 import "../../providers/summary_provider.dart";
+import "../../services/auth_service.dart";
+import "../../services/database_service.dart";
 import "../../widgets/animated_orb.dart";
 import "../../widgets/glass_card.dart";
 import "../../widgets/glow_button.dart";
 import "../../widgets/particle_background.dart";
 import "../loading/loading_screen.dart";
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -38,10 +42,28 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _handlePaste() async {
+    final provider = context.read<SummaryProvider>();
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (data != null && data.text != null) {
+      provider.updateInput(data.text!);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Text pasted from clipboard")),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Clipboard is empty")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final greeting = AppUtils.getGreeting(DateTime.now());
     final provider = context.watch<SummaryProvider>();
+    final history = context.watch<HistoryProvider>();
+    final authService = context.watch<AuthService>();
+    final user = authService.currentUser;
 
     if (_controller.text != provider.inputText) {
       _controller.text = provider.inputText;
@@ -66,11 +88,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            const Positioned(
-              top: -40,
-              right: -20,
-              child: AnimatedOrb(size: 160),
-            ),
             SafeArea(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
@@ -84,25 +101,37 @@ class _HomeScreenState extends State<HomeScreen> {
                           "$greeting 👋",
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor: Colors.white12,
-                          child: Text(
-                            "NB",
-                            style: Theme.of(context).textTheme.labelMedium,
-                          ),
+                        FutureBuilder<UserModel?>(
+                          future: user != null ? DatabaseService().getUserData(user.uid) : null,
+                          builder: (context, snapshot) {
+                            final name = snapshot.data?.name ?? "NB";
+                            return CircleAvatar(
+                              radius: 20,
+                              backgroundColor: Colors.white12,
+                              child: Text(
+                                name.isNotEmpty ? name[0].toUpperCase() : "NB",
+                                style: Theme.of(context).textTheme.labelMedium,
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    const Row(
+                    Row(
                       children: [
                         Expanded(
-                          child: _StatCard(label: "Total Summaries", value: "126"),
+                          child: _StatCard(
+                            label: "Total Summaries", 
+                            value: history.totalSummaries.toString(),
+                          ),
                         ),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Expanded(
-                          child: _StatCard(label: "Saved Notes", value: "42"),
+                          child: _StatCard(
+                            label: "Saved Notes", 
+                            value: history.totalSaved.toString(),
+                          ),
                         ),
                       ],
                     ),
@@ -154,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         _InputOption(
                           icon: Icons.article_outlined,
                           label: "Paste Text",
-                          onTap: () {},
+                          onTap: _handlePaste,
                         ),
                         _InputOption(
                           icon: Icons.camera_alt_outlined,

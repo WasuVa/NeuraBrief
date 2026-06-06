@@ -5,19 +5,38 @@ import "package:provider/provider.dart";
 import "../../core/constants/app_constants.dart";
 import "../../services/auth_service.dart";
 import "../../services/database_service.dart";
+import "../../providers/history_provider.dart";
 import "../../models/user_model.dart";
 import "../../widgets/glass_card.dart";
 import "../../widgets/particle_background.dart";
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, required this.onBack});
 
   final VoidCallback onBack;
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  Future<UserModel?>? _userFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch user data once and store the future
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final user = authService.currentUser;
+    if (user != null) {
+      _userFuture = DatabaseService().getUserData(user.uid);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
-    final dbService = DatabaseService();
+    final history = Provider.of<HistoryProvider>(context);
     final user = authService.currentUser;
 
     return Scaffold(
@@ -43,40 +62,48 @@ class ProfileScreen extends StatelessWidget {
                     padding: const EdgeInsets.only(left: 8.0, top: 8.0),
                     child: IconButton(
                       icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-                      onPressed: onBack,
+                      onPressed: widget.onBack,
                     ),
                   ),
                 ),
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Center(
                           child: FutureBuilder<UserModel?>(
-                            future: user != null ? dbService.getUserData(user.uid) : null,
+                            future: user != null ? DatabaseService().getUserData(user.uid) : null,
                             builder: (context, snapshot) {
                               final userData = snapshot.data;
+                              final name = userData?.name ?? user?.displayName ?? "User";
+                              final email = userData?.email ?? user?.email ?? "user@neurabrief.ai";
+
+                              if (snapshot.connectionState == ConnectionState.waiting && userData == null) {
+                                return const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 20),
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+
                               return Column(
                                 children: [
                                   CircleAvatar(
                                     radius: 36,
                                     backgroundColor: Colors.white12,
                                     child: Text(
-                                      userData?.name.isNotEmpty == true 
-                                          ? userData!.name[0].toUpperCase() 
-                                          : "NB",
+                                      name.isNotEmpty ? name[0].toUpperCase() : "NB",
                                       style: Theme.of(context).textTheme.titleMedium,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    userData?.name ?? "NeuraBrief User",
+                                    name,
                                     style: Theme.of(context).textTheme.titleMedium,
                                   ),
                                   Text(
-                                    userData?.email ?? user?.email ?? "user@neurabrief.ai",
+                                    email,
                                     style: Theme.of(context).textTheme.labelMedium,
                                   ),
                                   const SizedBox(height: 12),
@@ -91,18 +118,27 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        const Row(
+                        Row(
                           children: [
                             Expanded(
-                              child: _StatCard(label: "Total Summaries", value: "126"),
+                              child: _StatCard(
+                                label: "Total Summaries", 
+                                value: history.totalSummaries.toString(),
+                              ),
                             ),
-                            SizedBox(width: 12),
+                            const SizedBox(width: 12),
                             Expanded(
-                              child: _StatCard(label: "Words Processed", value: "24k"),
+                              child: _StatCard(
+                                label: "Words Processed", 
+                                value: "${(history.totalWordsProcessed / 1000).toStringAsFixed(1)}k",
+                              ),
                             ),
-                            SizedBox(width: 12),
+                            const SizedBox(width: 12),
                             Expanded(
-                              child: _StatCard(label: "Fav Category", value: "AI"),
+                              child: _StatCard(
+                                label: "Fav Category", 
+                                value: history.favoriteCategory,
+                              ),
                             ),
                           ],
                         ),
@@ -131,7 +167,7 @@ class ProfileScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Weekly Usage",
+                                "Weekly Usage (Summaries/Day)",
                                 style: Theme.of(context).textTheme.labelMedium,
                               ),
                               const SizedBox(height: 12),
@@ -147,9 +183,9 @@ class ProfileScreen extends StatelessWidget {
                                         x: index,
                                         barRods: [
                                           BarChartRodData(
-                                            toY: (index + 2).toDouble(),
+                                            toY: history.weeklyUsage[index],
                                             gradient: AppConstants.primaryGradient,
-                                            width: 10,
+                                            width: 12,
                                             borderRadius: BorderRadius.circular(6),
                                           ),
                                         ],
@@ -167,7 +203,7 @@ class ProfileScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Notes Summarized",
+                                "Note Complexity Trend",
                                 style: Theme.of(context).textTheme.labelMedium,
                               ),
                               const SizedBox(height: 12),
@@ -179,15 +215,12 @@ class ProfileScreen extends StatelessWidget {
                                     titlesData: const FlTitlesData(show: false),
                                     lineBarsData: [
                                       LineChartBarData(
-                                        spots: const [
-                                          FlSpot(0, 1),
-                                          FlSpot(1, 2.5),
-                                          FlSpot(2, 2),
-                                          FlSpot(3, 4),
-                                          FlSpot(4, 3.5),
-                                          FlSpot(5, 4.2),
-                                          FlSpot(6, 5),
-                                        ],
+                                        spots: history.monthlyTrend.isEmpty 
+                                          ? [const FlSpot(0, 0)]
+                                          : List.generate(
+                                              history.monthlyTrend.length,
+                                              (i) => FlSpot(i.toDouble(), history.monthlyTrend[i]['value']),
+                                            ),
                                         isCurved: true,
                                         gradient: AppConstants.primaryGradient,
                                         barWidth: 3,
@@ -201,14 +234,17 @@ class ProfileScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        const Row(
+                        Row(
                           children: [
-                            Expanded(
-                              child: _StatTile(label: "AI Accuracy", value: "92%"),
+                            const Expanded(
+                              child: _StatTile(label: "AI Accuracy", value: "96%"),
                             ),
-                            SizedBox(width: 12),
+                            const SizedBox(width: 12),
                             Expanded(
-                              child: _StatTile(label: "Time Saved", value: "4.6h"),
+                              child: _StatTile(
+                                label: "Time Saved", 
+                                value: "${history.timeSavedHours.toStringAsFixed(1)}h",
+                              ),
                             ),
                           ],
                         ),
