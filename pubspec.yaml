@@ -1,0 +1,30 @@
+name: neurabrief
+description: NeuraBrief - AI Note Summarizer
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.1.1
+  flutter_animate: ^4.3.0
+  lottie: ^3.0.0
+  shared_preferences: ^2.2.2
+  fl_chart: ^1.2.0
+  google_fonts: ^8.1.0
+  flutter_svg: ^2.0.9
+  uuid: ^4.2.1
+  shimmer: ^3.0.0
+  flutter_staggered_animations: ^1.1.1
+  animated_text_kit: ^4.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
