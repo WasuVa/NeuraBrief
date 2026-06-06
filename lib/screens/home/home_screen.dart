@@ -236,12 +236,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 24),
                     GlowButton(
-                      label: "✨ Generate Summary",
+                      label: history.canGenerateSummary ? "Generate Summary" : "Upgrade to Premium",
                       fullWidth: true,
                       onPressed: () {
-                        Navigator.of(context).push(
-                          AppUtils.fadeSlideRoute(const LoadingScreen()),
-                        );
+                        if (history.canGenerateSummary) {
+                          Navigator.of(context).push(
+                            AppUtils.fadeSlideRoute(const LoadingScreen()),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("AI Limit Reached. Please upgrade to Pro in Profile."),
+                              backgroundColor: Colors.orangeAccent,
+                            ),
+                          );
+                          // Optionally switch to profile tab
+                        }
                       },
                     ),
                   ],

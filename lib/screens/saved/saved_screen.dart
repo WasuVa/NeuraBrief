@@ -32,8 +32,12 @@ class _SavedScreenState extends State<SavedScreen> {
   Widget build(BuildContext context) {
     final history = context.watch<HistoryProvider>().history;
     final saved = history.where((item) => item.isFavorite).toList();
+    // Sort by date (newest first)
+    saved.sort((a, b) => b.date.compareTo(a.date));
+    
     final filtered = saved.where((item) {
-      final matchesCategory = _category == "All" || item.category == _category;
+      final matchesCategory = _category == "All" || 
+          item.category.toLowerCase().contains(_category.toLowerCase());
       final matchesQuery =
           _query.isEmpty || item.title.toLowerCase().contains(_query.toLowerCase());
       return matchesCategory && matchesQuery;

@@ -52,6 +52,55 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  // Update email
+  Future<void> updateEmail(String newEmail) async {
+    try {
+      await _auth.currentUser?.verifyBeforeUpdateEmail(newEmail);
+      notifyListeners();
+    } on FirebaseAuthException catch (e) {
+      if (kDebugMode) {
+        print('Firebase Auth Error: ${e.code} - ${e.message}');
+      }
+      rethrow;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error during email update: $e');
+      }
+      rethrow;
+    }
+  }
+
+  // Update password
+  Future<void> updatePassword(String newPassword) async {
+    try {
+      await _auth.currentUser?.updatePassword(newPassword);
+      notifyListeners();
+    } on FirebaseAuthException catch (e) {
+      if (kDebugMode) {
+        print('Firebase Auth Error: ${e.code} - ${e.message}');
+      }
+      rethrow;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error during password update: $e');
+      }
+      rethrow;
+    }
+  }
+
+  // Update display name (Auth profile)
+  Future<void> updateDisplayName(String newName) async {
+    try {
+      await _auth.currentUser?.updateDisplayName(newName);
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error during display name update: $e');
+      }
+      rethrow;
+    }
+  }
+
   // Sign out
   Future<void> signOut() async {
     await _auth.signOut();

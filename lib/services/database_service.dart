@@ -8,12 +8,34 @@ class DatabaseService {
   Future<void> saveUserData(String uid, UserModel user) async {
     try {
       await _db.collection('users').doc(uid).set({
-        'name': user.name,
-        'email': user.email,
+        ...user.toJson(),
         'createdAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
       print('Error saving user data: $e');
+      rethrow;
+    }
+  }
+
+  // Increment usage count
+  Future<void> incrementUsage(String uid) async {
+    try {
+      await _db.collection('users').doc(uid).update({
+        'usageCount': FieldValue.increment(1),
+      });
+    } catch (e) {
+      print('Error incrementing usage: $e');
+    }
+  }
+
+  // Update user name in Firestore
+  Future<void> updateUserName(String uid, String newName) async {
+    try {
+      await _db.collection('users').doc(uid).update({
+        'name': newName,
+      });
+    } catch (e) {
+      print('Error updating user name: $e');
       rethrow;
     }
   }
@@ -23,11 +45,7 @@ class DatabaseService {
     try {
       DocumentSnapshot doc = await _db.collection('users').doc(uid).get();
       if (doc.exists) {
-        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-        return UserModel(
-          name: data['name'] ?? '',
-          email: data['email'] ?? '',
-        );
+        return UserModel.fromJson(doc.data() as Map<String, dynamic>);
       }
       return null;
     } catch (e) {

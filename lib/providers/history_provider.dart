@@ -7,14 +7,26 @@ import "package:shared_preferences/shared_preferences.dart";
 import "package:uuid/uuid.dart";
 
 import "../models/summary_model.dart";
+import "../models/user_model.dart";
+import "../services/database_service.dart";
 
 class HistoryProvider extends ChangeNotifier {
   final List<SummaryModel> _history = [];
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   String? _userId;
+  UserModel? _userData;
 
   List<SummaryModel> get history => List.unmodifiable(_history);
+  UserModel? get userData => _userData;
+
+  bool get canGenerateSummary {
+    if (_userData == null) return true; // Default to true if not loaded yet
+    if (_userData!.isPremium) return true;
+    return _userData!.usageCount < 2;
+  }
+
+  int get remainingUsage => _userData != null ? (2 - _userData!.usageCount).clamp(0, 2) : 0;
 
   int get totalSummaries => _history.length;
   int get totalSaved => _history.where((s) => s.isFavorite).toList().length;
@@ -65,7 +77,21 @@ class HistoryProvider extends ChangeNotifier {
     if (_userId != uid) {
       _userId = uid;
       _history.clear(); // Clear old user's data from memory
+      _userData = null;
       loadHistory();
+    }
+  }
+
+  Future<void> refreshUserData() async {
+    if (_userId == null) return;
+    try {
+      final userDoc = await _db.collection('users').doc(_userId).get();
+      if (userDoc.exists) {
+        _userData = UserModel.fromJson(userDoc.data()!);
+        notifyListeners();
+      }
+    } catch (e) {
+      print("Error refreshing user data: $e");
     }
   }
 
@@ -86,6 +112,13 @@ class HistoryProvider extends ChangeNotifier {
     // 2. If logged in, load from Firestore and sync
     if (_userId != null) {
       try {
+        // Fetch user metadata (premium status, usage)
+        final userDoc = await _db.collection('users').doc(_userId).get();
+        if (userDoc.exists) {
+          _userData = UserModel.fromJson(userDoc.data()!);
+          notifyListeners();
+        }
+
         final snapshot = await _db
             .collection('users')
             .doc(_userId)
@@ -123,6 +156,17 @@ class HistoryProvider extends ChangeNotifier {
             .collection('summaries')
             .doc(summary.id)
             .set(summary.toJson());
+        
+        // Update local usage count
+        if (_userData != null) {
+          _userData = UserModel(
+            name: _userData!.name,
+            email: _userData!.email,
+            isPremium: _userData!.isPremium,
+            usageCount: _userData!.usageCount + 1,
+          );
+          await DatabaseService().incrementUsage(_userId!);
+        }
       } catch (e) {
         print("Error saving to Firestore: $e");
       }

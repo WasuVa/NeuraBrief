@@ -9,6 +9,7 @@ import "../../providers/history_provider.dart";
 import "../../models/user_model.dart";
 import "../../widgets/glass_card.dart";
 import "../../widgets/particle_background.dart";
+import "../../widgets/glow_button.dart";
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, required this.onBack});
@@ -20,17 +21,122 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  Future<UserModel?>? _userFuture;
+  Future<void> _showEditProfileDialog(UserModel? userData, String? userEmail) async {
+    final nameController = TextEditingController(text: userData?.name);
+    final emailController = TextEditingController(text: userEmail);
+    final passwordController = TextEditingController();
+    bool isLoading = false;
 
-  @override
-  void initState() {
-    super.initState();
-    // Fetch user data once and store the future
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final user = authService.currentUser;
-    if (user != null) {
-      _userFuture = DatabaseService().getUserData(user.uid);
-    }
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => Dialog(
+          backgroundColor: Colors.transparent,
+          child: GlassCard(
+            padding: const EdgeInsets.all(20),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text("Edit Profile", style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: nameController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: "Full Name",
+                      labelStyle: TextStyle(color: Colors.white70),
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: emailController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: "Email",
+                      labelStyle: TextStyle(color: Colors.white70),
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: passwordController,
+                    obscureText: true,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: "New Password (Optional)",
+                      labelStyle: TextStyle(color: Colors.white70),
+                      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white24)),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  if (isLoading)
+                    const CircularProgressIndicator()
+                  else
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text("CANCEL", style: TextStyle(color: Colors.white70)),
+                          ),
+                        ),
+                        Expanded(
+                          child: GlowButton(
+                            label: "SAVE",
+                            onPressed: () async {
+                              final auth = Provider.of<AuthService>(context, listen: false);
+                              final db = DatabaseService();
+                              final user = auth.currentUser;
+
+                              if (user == null) return;
+
+                              setDialogState(() => isLoading = true);
+                              try {
+                                // 1. Update Name in Firestore
+                                if (nameController.text.trim() != userData?.name) {
+                                  await db.updateUserName(user.uid, nameController.text.trim());
+                                }
+
+                                // 2. Update Email in Firebase Auth
+                                if (emailController.text.trim() != userEmail) {
+                                  await auth.updateEmail(emailController.text.trim());
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("A verification email has been sent to your new address.")),
+                                  );
+                                }
+
+                                // 3. Update Password in Firebase Auth
+                                if (passwordController.text.isNotEmpty) {
+                                  await auth.updatePassword(passwordController.text);
+                                }
+
+                                await history.refreshUserData();
+
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Profile updated successfully!")),
+                                );
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Error: ${e.toString()}")),
+                                );
+                              } finally {
+                                setDialogState(() => isLoading = false);
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -38,6 +144,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final authService = Provider.of<AuthService>(context);
     final history = Provider.of<HistoryProvider>(context);
     final user = authService.currentUser;
+    final userData = history.userData;
 
     return Scaffold(
       body: ParticleBackground(
@@ -73,51 +180,126 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Center(
-                          child: FutureBuilder<UserModel?>(
-                            future: user != null ? DatabaseService().getUserData(user.uid) : null,
-                            builder: (context, snapshot) {
-                              final userData = snapshot.data;
-                              final name = userData?.name ?? user?.displayName ?? "User";
-                              final email = userData?.email ?? user?.email ?? "user@neurabrief.ai";
-
-                              if (snapshot.connectionState == ConnectionState.waiting && userData == null) {
-                                return const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 20),
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
-
-                              return Column(
+                          child: Column(
+                            children: [
+                              Stack(
                                 children: [
                                   CircleAvatar(
                                     radius: 36,
                                     backgroundColor: Colors.white12,
                                     child: Text(
-                                      name.isNotEmpty ? name[0].toUpperCase() : "NB",
+                                      userData?.name.isNotEmpty == true 
+                                          ? userData!.name[0].toUpperCase() 
+                                          : "NB",
                                       style: Theme.of(context).textTheme.titleMedium,
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    name,
-                                    style: Theme.of(context).textTheme.titleMedium,
+                                  if (userData?.isPremium == true)
+                                    const Positioned(
+                                      right: 0,
+                                      bottom: 0,
+                                      child: Icon(Icons.verified, color: AppConstants.secondary, size: 24),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                userData?.name ?? "User",
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              Container(
+                                margin: const EdgeInsets.only(top: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: userData?.isPremium == true ? AppConstants.secondary.withValues(alpha: 0.2) : Colors.white10,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: userData?.isPremium == true ? AppConstants.secondary : Colors.white24),
+                                ),
+                                child: Text(
+                                  userData?.isPremium == true ? "PRO ACCOUNT" : "FREE PLAN",
+                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: userData?.isPremium == true ? AppConstants.secondary : Colors.white70,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  Text(
-                                    email,
-                                    style: Theme.of(context).textTheme.labelMedium,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  TextButton.icon(
+                                    onPressed: () => _showEditProfileDialog(userData, user?.email),
+                                    icon: const Icon(Icons.edit_rounded, color: AppConstants.primary, size: 18),
+                                    label: const Text("Edit Profile", style: TextStyle(color: AppConstants.primary)),
                                   ),
-                                  const SizedBox(height: 12),
+                                  const SizedBox(width: 8),
                                   TextButton.icon(
                                     onPressed: () => authService.signOut(),
                                     icon: const Icon(Icons.logout, color: Colors.redAccent, size: 18),
                                     label: const Text("Logout", style: TextStyle(color: Colors.redAccent)),
                                   ),
                                 ],
-                              );
-                            },
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 24),
+                        
+                        // Usage Card
+                        if (userData?.isPremium == false)
+                          GlassCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text("AI Generation Usage", style: Theme.of(context).textTheme.titleSmall),
+                                    Text("${userData?.usageCount ?? 0}/2 used", style: Theme.of(context).textTheme.labelMedium),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                LinearProgressIndicator(
+                                  value: (userData?.usageCount ?? 0) / 2,
+                                  backgroundColor: Colors.white12,
+                                  color: AppConstants.primary,
+                                  minHeight: 8,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                const SizedBox(height: 16),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: AppConstants.secondary.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: AppConstants.secondary.withValues(alpha: 0.3)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.auto_awesome, color: AppConstants.secondary),
+                                      const SizedBox(width: 12),
+                                      const Expanded(
+                                        child: Text(
+                                          "Get unlimited AI summaries and advanced mind mapping with Pro.",
+                                          style: TextStyle(fontSize: 12, color: Colors.white70),
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text("Premium payment coming soon!"))
+                                          );
+                                        },
+                                        child: const Text("UPGRADE", style: TextStyle(color: AppConstants.secondary, fontWeight: FontWeight.bold)),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                        const SizedBox(height: 24),
                         Row(
                           children: [
                             Expanded(
@@ -140,20 +322,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 value: history.favoriteCategory,
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          "Achievements",
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        const Wrap(
-                          spacing: 8,
-                          children: [
-                            _Badge(label: "🥉 Beginner"),
-                            _Badge(label: "🥈 Learner"),
-                            _Badge(label: "🥇 AI Master"),
                           ],
                         ),
                         const SizedBox(height: 20),

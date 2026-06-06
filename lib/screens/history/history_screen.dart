@@ -67,14 +67,34 @@ class HistoryScreen extends StatelessWidget {
                                 onDismissed: (_) {
                                   context.read<HistoryProvider>().deleteSummary(item.id);
                                 },
-                                child: GestureDetector(
-                                  onTap: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => SummaryDetailDialog(summary: item),
-                                    );
-                                  },
-                                  child: _HistoryCard(item: item),
+                                child: Stack(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => SummaryDetailDialog(summary: item),
+                                        );
+                                      },
+                                      child: _HistoryCard(item: item),
+                                    ),
+                                    Positioned(
+                                      top: 10,
+                                      right: 10,
+                                      child: IconButton(
+                                        icon: Icon(
+                                          item.isFavorite 
+                                              ? Icons.bookmark_rounded 
+                                              : Icons.bookmark_outline_rounded,
+                                          color: item.isFavorite ? AppConstants.secondary : Colors.white70,
+                                          size: 20,
+                                        ),
+                                        onPressed: () {
+                                          context.read<HistoryProvider>().toggleFavorite(item.id);
+                                        },
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               );
                             },
