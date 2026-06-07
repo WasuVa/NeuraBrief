@@ -20,7 +20,7 @@ NeuraBrief is a sophisticated, AI-powered mobile application built with Flutter 
 
 | Onboarding | Home | Summary | History |
 | :---: | :---: | :---: | :---: |
-| ![Onboarding Placeholder](https://via.placeholder.com/200x400?text=Onboarding) | ![Home Placeholder](https://via.placeholder.com/200x400?text=Home) | ![Summary Placeholder](https://via.placeholder.com/200x400?text=Summary) | ![History Placeholder](https://via.placeholder.com/200x400?text=History) |
+| ![Onboarding Placeholder](assets/screenshots/login.jpeg) | ![Home Placeholder](assets/screenshots/home.jpeg) | ![Summary Placeholder](assets/screenshots/summery.jpeg) | ![History Placeholder](assets/screenshots/history.jpeg) | ![Profile Placeholder](assets/screenshots/profile.jpeg) |
 
 ---
 
