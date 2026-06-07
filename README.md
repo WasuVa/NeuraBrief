@@ -91,7 +91,7 @@ lib/
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is proprietary and confidential. All rights reserved. Unauthorized copying, distribution, or use of this project is strictly prohibited. See the [LICENSE](LICENSE) file for the full legal text.
 
 ---
 
