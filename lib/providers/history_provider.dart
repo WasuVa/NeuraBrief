@@ -88,10 +88,42 @@ class HistoryProvider extends ChangeNotifier {
       final userDoc = await _db.collection('users').doc(_userId).get();
       if (userDoc.exists) {
         _userData = UserModel.fromJson(userDoc.data()!);
+        await _checkAndResetUsage();
         notifyListeners();
       }
     } catch (e) {
       print("Error refreshing user data: $e");
+    }
+  }
+
+  Future<void> _checkAndResetUsage() async {
+    if (_userData == null || _userId == null) return;
+
+    final now = DateTime.now();
+    final lastReset = _userData!.lastUsageReset;
+
+    bool needsReset = false;
+    if (lastReset == null) {
+      needsReset = true;
+    } else {
+      // Check if it's a different day
+      if (now.year != lastReset.year ||
+          now.month != lastReset.month ||
+          now.day != lastReset.day) {
+        needsReset = true;
+      }
+    }
+
+    if (needsReset) {
+      await DatabaseService().resetUsage(_userId!);
+      // Update local state to avoid waiting for next fetch
+      _userData = UserModel(
+        name: _userData!.name,
+        email: _userData!.email,
+        isPremium: _userData!.isPremium,
+        usageCount: 0,
+        lastUsageReset: now,
+      );
     }
   }
 
@@ -116,6 +148,7 @@ class HistoryProvider extends ChangeNotifier {
         final userDoc = await _db.collection('users').doc(_userId).get();
         if (userDoc.exists) {
           _userData = UserModel.fromJson(userDoc.data()!);
+          await _checkAndResetUsage();
           notifyListeners();
         }
 
@@ -164,6 +197,7 @@ class HistoryProvider extends ChangeNotifier {
             email: _userData!.email,
             isPremium: _userData!.isPremium,
             usageCount: _userData!.usageCount + 1,
+            lastUsageReset: _userData!.lastUsageReset,
           );
           await DatabaseService().incrementUsage(_userId!);
         }

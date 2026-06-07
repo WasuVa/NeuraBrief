@@ -28,6 +28,18 @@ class DatabaseService {
     }
   }
 
+  // Reset usage count and date
+  Future<void> resetUsage(String uid) async {
+    try {
+      await _db.collection('users').doc(uid).update({
+        'usageCount': 0,
+        'lastUsageReset': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error resetting usage: $e');
+    }
+  }
+
   // Update user name in Firestore
   Future<void> updateUserName(String uid, String newName) async {
     try {

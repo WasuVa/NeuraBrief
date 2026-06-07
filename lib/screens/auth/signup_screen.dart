@@ -45,6 +45,7 @@ class _SignupScreenState extends State<SignupScreen> {
         final user = UserModel(
           name: _nameController.text.trim(),
           email: _emailController.text.trim(),
+          lastUsageReset: DateTime.now(),
         );
         await dbService.saveUserData(credential!.user!.uid, user);
       }
@@ -94,7 +95,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.person_add, size: 80, color: Colors.white),
+                        Image.asset(
+                          'assets/app_icon.png',
+                          height: 100,
+                        ),
                         const SizedBox(height: 24),
                         Text(
                           'Create Account',
